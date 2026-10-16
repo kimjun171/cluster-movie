@@ -95,4 +95,57 @@ scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
 kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-initial_
+initial_labels = kmeans.fit_predict(X_scaled)
+df['temp_cluster'] = initial_labels
+
+# 기호 생성 (㉮, ㉯, ㉰, ㉱, ㉲, ㉳, ㉴)
+all_symbols = ['㉮', '㉯', '㉰', '㉱', '㉲', '㉳', '㉴']
+symbols = all_symbols[:n_clusters]
+
+# 누적 관객 평균이 큰 순서대로 기호 부여
+cluster_avg_audi = df.groupby('temp_cluster')['total_audi'].mean().sort_values(ascending=False)
+label_map = {old_cluster: new_symbol for old_cluster, new_symbol in zip(cluster_avg_audi.index, symbols)}
+
+df['cluster'] = df['temp_cluster'].map(label_map)
+df['cluster'] = pd.Categorical(df['cluster'], categories=symbols, ordered=True)
+
+# 6. 실루엣 점수 표시
+s_score = silhouette_score(X_scaled, df['cluster'])
+st.markdown(f"### 🎯 선택한 **{n_clusters}개 묶음**의 실루엣 점수: `{s_score:.4f}`")
+st.caption("※ 실루엣 점수는 -1에서 1 사이의 값을 가지며, 1에 가까울수록 각 묶음이 서로 명확하게 구분된다는 뜻입니다.")
+
+# 7. 2차원 산점도
+st.markdown("---")
+st.subheader("📌 2차원 산점도")
+
+col_2d_x, col_2d_y = st.columns(2)
+
+with col_2d_x:
+    x_axis_2d = st.selectbox(
+        "가로축(X축) 속성 선택",
+        options=selected_feature_keys,
+        index=0,
+        format_func=lambda x: feature_options[x],
+        key="2d_x"
+    )
+
+with col_2d_y:
+    y_axis_2d = st.selectbox(
+        "세로축(Y축) 속성 선택",
+        options=selected_feature_keys,
+        index=1 if len(selected_feature_keys) > 1 else 0,
+        format_func=lambda x: feature_options[x],
+        key="2d_y"
+    )
+
+fig_2d = px.scatter(
+    df,
+    x=x_axis_2d,
+    y=y_axis_2d,
+    color='cluster',
+    category_orders={'cluster': symbols},
+    hover_name='movieNm',
+    hover_data={'total_audi': ':,', 'first_scrn': ':,', 'days_in_top10': True, 'long_run_index': ':.2f'},
+    title=f"2차원 산점도 ({feature_options[x_axis_2d]} vs {feature_options[y_axis_2d]})",
+    labels={
+        x_axis_2d: feature_options
