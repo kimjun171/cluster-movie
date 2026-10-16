@@ -131,21 +131,4 @@ with col_2d_x:
 
 with col_2d_y:
     y_axis_2d = st.selectbox(
-        "세로축(Y축) 속성 선택",
-        options=selected_feature_keys,
-        index=1 if len(selected_feature_keys) > 1 else 0,
-        format_func=lambda x: feature_options[x],
-        key="2d_y"
-    )
-
-fig_2d = px.scatter(
-    df,
-    x=x_axis_2d,
-    y=y_axis_2d,
-    color='cluster',
-    category_orders={'cluster': symbols},
-    hover_name='movieNm',
-    hover_data={'total_audi': ':,', 'first_scrn': ':,', 'days_in_top10': True, 'long_run_index': ':.2f'},
-    title=f"2차원 산점도 ({feature_options[x_axis_2d]} vs {feature_options[y_axis_2d]})",
-    labels={
-        x_axis_2d: feature_options
+        "
